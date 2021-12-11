@@ -48,7 +48,7 @@ boxplot_line <- function(bounds=c(0, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6,
 # Write function that, similarly to boxplot_line() above, will plot the average of the continuous confidence intervals for each binned distance
 
 # Import block bootstrap quantile data
-confInt_lines <- function(bounds=c(0, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6, 1E7, 2.5E7), quantiles_vectors = readRDS("data/block_bootstrap_quantiles.rds"), distance_vector){
+confInt_lines <- function(bounds=c(0, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6, 1E7, 2.5E7), quantiles_vectors = readRDS("data/block_bootstrap_quantiles_mouse.rds"), distance_vector){
   quantile_means <- data.frame(matrix(nrow=6, ncol=length(bounds)))
   row.names(quantile_means) <- c("1%","5%","25%","75%","95%","99%")
   for(n in 1:nrow(quantile_means)){

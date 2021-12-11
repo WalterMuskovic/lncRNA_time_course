@@ -70,6 +70,10 @@ Rscript $code_dir/de_norm_mouse.R
 Rscript $code_dir/get_genomic_coords.R
 Rscript $code_dir/get_genomic_coords_mouse.R
 
+## Download cis reg element data from ENCODE
+Rscript $code_dir/encode_cis_reg.R
+
+
 
 ### Fig. 1 - mRNA and lncRNA expression
 Rscript $code_dir/create_data_for_Fig_1.R
@@ -129,3 +133,5 @@ Rscript $code_dir/create_Fig_S2.R
 Rscript $code_dir/create_Fig_S3.R
 ## Figure S4
 Rscript $code_dir/create_Fig_S4.R
+## Figure S5
+Rscript $code_dir/create_Fig_S5.R

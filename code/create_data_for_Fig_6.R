@@ -458,8 +458,6 @@ c_nc <- get_corr.dist(row_vec = subset_counts$transcript_type != "protein_coding
                       row_type = "first_10Kb",
                       col_type = "first_10Kb",
                       input_df = subset_counts)
-
-saveRDS(c_nc, "data/c_nc_no_anno.rds")
 if(!file.exists("data/S4_not_overlapping_block_bootstrap_quantiles.rds")){
   # Load furrr package to speed up running the block bootstrap
   plan(multisession, workers = 20)
@@ -475,6 +473,73 @@ if(!file.exists("data/S4_not_overlapping_block_bootstrap_quantiles.rds")){
   quantiles <- apply(block_bootstrap_results , 2, quantile, probs = c(0.01,0.05,0.25,0.75,0.95,0.99) , na.rm = TRUE )
   # Save out, as takes a while
   saveRDS(quantiles, "data/S4_not_overlapping_block_bootstrap_quantiles.rds")
+  # Clean up
+  rm(n, quantiles, block_bootstrap_results, subset_counts)
+}
+
+
+
+# Prepare data for Supplementary Fig. 5 -----------------------------------
+
+# Run the bootstrap using only lncRNAs with TSS near a promoter element
+# (Supplementary Fig. 5 pt I)
+h.lnc <- readRDS("data/h.lnc.rds")
+counts <- counts[counts$transcript_id%in%h.lnc$transcript_id,]
+h.lnc <- h.lnc[h.lnc$transcript_id%in%counts$transcript_id,]
+h.lnc <- arrange(h.lnc,transcript_id)
+counts <- arrange(counts,transcript_id)
+table(h.lnc$transcript_id==counts$transcript_id)
+counts$reg <- h.lnc$reg
+subset_counts <- filter(counts, (transcript_type!="protein_coding" & reg=="promoter") | transcript_type=="protein_coding")
+c_nc <- get_corr.dist(row_vec = subset_counts$transcript_type != "protein_coding" & !sapply(subset_counts$first_10Kb, is.null),
+                      col_vec = subset_counts$transcript_type == "protein_coding" & !sapply(subset_counts$first_10Kb, is.null),
+                      row_type = "first_10Kb",
+                      col_type = "first_10Kb",
+                      input_df = subset_counts)
+saveRDS(c_nc, "data/c_nc_promoter.rds")
+if(!file.exists("data/S5_promoter_block_bootstrap_quantiles.rds")){
+  # Load furrr package to speed up running the block bootstrap
+  plan(multisession, workers = 20)
+  # Set how many times the bootstrap should be run
+  n=1000
+  # Set the seed for reproducibility
+  set.seed(1234)
+  # Run block bootsrap n times
+  block_bootstrap_results <- future_map(seq_len(n), ~ bbstrap_iterate(df_in = subset_counts), .progress = TRUE, .options = furrr_options(seed = TRUE))
+  # Get data in data frame instead of a list
+  block_bootstrap_results <- t(bind_cols(block_bootstrap_results))
+  # Calculate percentiles
+  quantiles <- apply(block_bootstrap_results , 2, quantile, probs = c(0.01,0.05,0.25,0.75,0.95,0.99) , na.rm = TRUE )
+  # Save out, as takes a while
+  saveRDS(quantiles, "data/S5_promoter_block_bootstrap_quantiles.rds")
+  # Clean up
+  rm(n, quantiles, block_bootstrap_results)
+}
+
+# Run the bootstrap using only lncRNAs with TSS near an enhancer element
+# (Supplementary Fig. 5 pt II)
+subset_counts <- filter(counts, (transcript_type!="protein_coding" & reg=="enhancer") | transcript_type=="protein_coding")
+c_nc <- get_corr.dist(row_vec = subset_counts$transcript_type != "protein_coding" & !sapply(subset_counts$first_10Kb, is.null),
+                      col_vec = subset_counts$transcript_type == "protein_coding" & !sapply(subset_counts$first_10Kb, is.null),
+                      row_type = "first_10Kb",
+                      col_type = "first_10Kb",
+                      input_df = subset_counts)
+saveRDS(c_nc, "data/c_nc_enhancer.rds")
+if(!file.exists("data/S5_enhancer_block_bootstrap_quantiles.rds")){
+  # Load furrr package to speed up running the block bootstrap
+  plan(multisession, workers = 20)
+  # Set how many times the bootstrap should be run
+  n=1000
+  # Set the seed for reproducibility
+  set.seed(1234)
+  # Run block bootsrap n times
+  block_bootstrap_results <- future_map(seq_len(n), ~ bbstrap_iterate(df_in = subset_counts), .progress = TRUE, .options = furrr_options(seed = TRUE))
+  # Get data in data frame instead of a list
+  block_bootstrap_results <- t(bind_cols(block_bootstrap_results))
+  # Calculate percentiles
+  quantiles <- apply(block_bootstrap_results , 2, quantile, probs = c(0.01,0.05,0.25,0.75,0.95,0.99) , na.rm = TRUE )
+  # Save out, as takes a while
+  saveRDS(quantiles, "data/S5_enhancer_block_bootstrap_quantiles.rds")
   # Clean up
   rm(n, quantiles, block_bootstrap_results, subset_counts)
 }
