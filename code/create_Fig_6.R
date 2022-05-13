@@ -6,8 +6,8 @@ library(mgcv)
 
 #Define functions to create the required plot. The first function will produce violin plots of Pearson's correlation values between genes at binned distances. The second function will overlay the GAM fit over the binned data. The third function will plot the confidence intervals obtained from the block bootstrap over the binned data. Finally a wrapper function will combine everything in one plot.
 ## 1. Define plotting function to plot relationship between correlation and distance using violin plots
-vioplot_corr_dist <- function(bounds = c(0, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6, 1E7, 2.5E7),
-                              bin_labels = c("<10Kb", "10-25Kb", "25-50Kb", "50-100Kb", "100-250Kb", "250-500Kb", "500Kb-1Mb", "1-5Mb", "5-10Mb", "10-25Mb", ">25Mb"),
+vioplot_corr_dist <- function(bounds = c(0, 1E3, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6, 1E7, 2.5E7),
+                              bin_labels = c("<1Kb","2-10Kb", "10-25Kb", "25-50Kb", "50-100Kb", "100-250Kb", "250-500Kb", "500Kb-1Mb", "1-5Mb", "5-10Mb", "10-25Mb", ">25Mb"),
                               input_df,
                               plot_title,
                               x_axis_label="Distance between coding and lncRNA transcripts"){
@@ -35,7 +35,7 @@ vioplot_corr_dist <- function(bounds = c(0, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E
 
 ## 2. Define another function to overlay the GAM fit over the binned data
 # Define function to return mean value for data binned by bounds vector, so that we can plot the continuous GAM fit over the boxplots
-boxplot_line <- function(bounds=c(0, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6, 1E7, 2.5E7), gam_vector, distance_vector){
+boxplot_line <- function(bounds=c(0, 1E3, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6, 1E7, 2.5E7), gam_vector, distance_vector){
   bin_means <- c()
   for(i in 1:(length(bounds)-1)){
     bin_means[i] <- mean(gam_vector[distance_vector>=bounds[i] & distance_vector<bounds[i+1]])
@@ -48,7 +48,7 @@ boxplot_line <- function(bounds=c(0, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6,
 # Write function that, similarly to boxplot_line() above, will plot the average of the continuous confidence intervals for each binned distance
 
 # Import block bootstrap quantile data
-confInt_lines <- function(bounds=c(0, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6, 1E7, 2.5E7), quantiles_vectors = readRDS("data/block_bootstrap_quantiles.rds"), distance_vector){
+confInt_lines <- function(bounds=c(0, 1E3, 1E4, 2.5E4, 5E4, 1E5, 2.5E5, 5E5, 1E6, 5E6, 1E7, 2.5E7), quantiles_vectors = readRDS("data/block_bootstrap_quantiles.rds"), distance_vector){
   quantile_means <- data.frame(matrix(nrow=6, ncol=length(bounds)))
   row.names(quantile_means) <- c("1%","5%","25%","75%","95%","99%")
   for(n in 1:nrow(quantile_means)){
@@ -67,10 +67,10 @@ fig6a <- function(){
   # Violin plot of the relationship between genomic distance and expression profile correlation
   vioplot_corr_dist(input_df = c_nc, plot_title = "Coding/lncRNA genomic distance \nvs. expression correlation")
   # Add line with the mean of the GAM fit for each distance bin
-  lines(1:11, boxplot_line(gam_vector = as.numeric(predict(gam_fit), type="terms"), distance_vector=c_nc$dist),col="red", lwd=2)
+  lines(1:12, boxplot_line(gam_vector = as.numeric(predict(gam_fit), type="terms"), distance_vector=c_nc$dist),col="red", lwd=2)
   # Add confidence intervals
   quantiles <- confInt_lines(quantiles_vectors = readRDS("data/block_bootstrap_quantiles.rds"), distance_vector = c_nc$dist)
-  polygon(c(1:11, rev(1:11)), c(quantiles["1%",], rev(quantiles["99%",])), col = adjustcolor("#de2d26", alpha=0.4), border = NA)
+  polygon(c(1:12, rev(1:12)), c(quantiles["1%",], rev(quantiles["99%",])), col = adjustcolor("#de2d26", alpha=0.4), border = NA)
   # Add legend
   par(xpd=TRUE)
   legend(x = -1, y = 1.4, legend="1st-99th percentile", bty="n", col=adjustcolor("#de2d26", alpha=0.4), pch=15)
