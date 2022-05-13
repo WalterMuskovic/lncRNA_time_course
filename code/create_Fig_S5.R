@@ -137,3 +137,66 @@ figS5b <- function(){
 pdf("figures/Fig_S5/Fig_S5b.pdf", width=7, height=5)
 figS5b()
 dev.off()
+
+
+### In response to a reviewer question:  for each lncRNA's TSS, plot the
+### distance to the nearest protein-coding TSS
+
+# Get data
+t98g <- readRDS("data/t98g_filtered_coords.rds") %>% 
+  select(transcript_id, seqid, coords, transcript_type) %>%
+  mutate(transcript_type = case_when(
+    transcript_type == "novel_lncRNA" ~ "lncRNA",
+    transcript_type == "annotated_lncRNA" ~ "lncRNA",
+    TRUE ~ "protein_coding"
+  ))
+
+# Define function to return distance of nearest transcript of opposite type
+dist_fun <- function(i){
+  subset.transcript_type <-t98g$transcript_type[i]
+  subset.seqid <- t98g$seqid[i]
+  t98g.subset <- filter(t98g, seqid==subset.seqid,
+                        transcript_type != subset.transcript_type)
+  return(min(abs(t98g$coords[i] - t98g.subset$coords)))
+}
+
+# Apply function
+t98g$nearest_pc <- sapply(1:nrow(t98g), dist_fun)
+
+# Restrict to lncRNAs
+t98g <- filter(t98g, transcript_type=="lncRNA")
+
+# Check how many are within 10Kb
+table(t98g$nearest_pc<10000)/nrow(t98g)*100
+#FALSE     TRUE 
+#88.33393 11.66607 
+
+# What is the median distance
+median(t98g$nearest_pc)
+# [1] 139263
+
+# Add reg info so we can split into enhancer-associated and promoter-associated
+t98g <- merge(t98g, select(readRDS("data/h.lnc.rds"), transcript_id, reg), by="transcript_id") %>%
+  filter(reg%in%c("promoter", "enhancer")) %>%
+  mutate(reg = case_when(
+    reg == "promoter" ~ "promoter-associated",
+    reg == "enhancer" ~ "enhancer-associated"
+  ))
+
+# Plot
+p1 <- ggplot(t98g, aes(x=log10(nearest_pc))) +
+  geom_histogram(aes(y=..density..),bins=30) + 
+  geom_density(alpha=.2, aes(fill=reg)) +
+  facet_wrap(~reg, ) +
+  xlab("log10(distance between lncRNA TSS and nearest protein-coding TSS (bp))") +
+  guides(fill=guide_legend(title="lncRNA")) +
+  theme_classic() +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank()
+  )
+
+# Save out figure
+ggsave(filename = "figures/Fig_S5/Fig_S5c.pdf",
+       plot = p1,
+       device = "pdf", width = 30, height = 12, units = "cm")
