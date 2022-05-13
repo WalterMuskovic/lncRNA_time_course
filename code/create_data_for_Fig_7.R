@@ -266,7 +266,7 @@ print("Applying the block bootstrap")
 ## Start by tiling chromosomes with blocks of appropriate size and allocating
 ## coding genes and lncRNAs (seperately) into a numbered bin
 
-# Define vector of chromosome lengths for GRCh38
+# Define vector of chromosome lengths for GRCm38
 chromosome_length <- c(chr1=195471971, chr10=130694993, chr11=122082543,
                        chr12=120129022, chr13=120421639, chr14=124902244,
                        chr15=104043685, chr16=98207768, chr17=94987271,
